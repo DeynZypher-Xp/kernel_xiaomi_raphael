@@ -260,7 +260,7 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 
 	pr_info("do_execveat_common su found\n");
 
-	pending_root = ksu_sulog_capture_root_execve_kern(filename->name, sucompat_argv, GFP_KERNEL);
+	pending_root = ksu_sulog_capture_root_execve_kern(filename->name, NULL, GFP_KERNEL);
 
 	memcpy((void *)filename->name, ksud_path, sizeof(ksud_path));
 

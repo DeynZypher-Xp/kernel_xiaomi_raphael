@@ -51,7 +51,7 @@ jobs:
           make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            drivers/kernelsu/core/init.o
+            drivers/kernelsu/
 
       - name: Compile ZypherX Kernel (Image.gz-dtb & dtbo.img)
         run: |
