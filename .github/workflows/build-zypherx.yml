@@ -43,7 +43,7 @@ jobs:
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
             raphael_defconfig
-          # Evaluate drivers/kernelsu/Kbuild before parallel build so its sed backports
+          # Evaluate drivers/kernelsu/ drivers/net/wireless/ath/ath9k/Kbuild before parallel build so its sed backports
           # on fs/namespace.c, include/linux/seccomp.h, and security/selinux/* run race-free
           make -j"$(nproc --all)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE=aarch64-linux-gnu- \
@@ -54,7 +54,7 @@ jobs:
           make -j"$(nproc --all)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            drivers/kernelsu/
+            drivers/kernelsu/ drivers/net/wireless/ath/ath9k/
 
       - name: Compile ZypherX Kernel (Image.gz-dtb & dtbo.img)
         run: |
