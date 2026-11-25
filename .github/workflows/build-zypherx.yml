@@ -3,7 +3,8 @@ name: Build ZypherX Kernel (raphael - ColorOS 17 + Kali NetHunter + KernelSU-Nex
 on:
   push:
     branches:
-      - '**'
+      - zundamon-evo-public
+      - main
   workflow_dispatch:
 
 jobs:
@@ -28,7 +29,7 @@ jobs:
       - name: Setup ZyC Clang 14 Toolchain
         run: |
           mkdir -p "$HOME/clang"
-          curl -L -s "https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20261022-release/Clang-14.0.6-20261022.tar.gz" -o clang.tar.gz
+          curl -f -L -s "https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20261022-release/Clang-14.0.6-20261022.tar.gz" -o clang.tar.gz
           tar -xzf clang.tar.gz -C "$HOME/clang"
           rm -f clang.tar.gz
           "$HOME/clang/bin/clang" --version
