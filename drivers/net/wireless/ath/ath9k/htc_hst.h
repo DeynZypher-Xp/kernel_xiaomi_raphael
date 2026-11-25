@@ -202,6 +202,14 @@ struct htc_comp_msg {
 	__be16 msg_id;
 } __packed;
 
+#define htc_init ath9k_htc_init
+#define htc_connect_service ath9k_htc_connect_service
+#define htc_send ath9k_htc_send
+#define htc_send_epid ath9k_htc_send_epid
+#define htc_stop ath9k_htc_stop
+#define htc_start ath9k_htc_start
+#define htc_sta_drain ath9k_htc_sta_drain
+
 int htc_init(struct htc_target *target);
 int htc_connect_service(struct htc_target *target,
 			  struct htc_service_connreq *service_connreq,
