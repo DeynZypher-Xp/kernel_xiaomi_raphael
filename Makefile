@@ -761,10 +761,9 @@ endif
 
 ifeq ($(cc-name),clang)
 # Enable hot cold split optimization
-KBUILD_CFLAGS	+= -mllvm -hot-cold-split=true
-# Enable MLGO optimizations for register allocation
-KBUILD_CFLAGS	+= -mllvm -regalloc-enable-advisor=release
-LDFLAGS			+= -mllvm -regalloc-enable-advisor=release
+KBUILD_CFLAGS	+= $(call cc-option,-mllvm -hot-cold-split=true)
+# Enable MLGO optimizations for register allocation if supported by toolchain
+KBUILD_CFLAGS	+= $(call cc-option,-mllvm -regalloc-enable-advisor=release)
 endif
 
 # Tell gcc to never replace conditional load with a non-conditional one
