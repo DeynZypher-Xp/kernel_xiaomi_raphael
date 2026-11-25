@@ -45,11 +45,13 @@ jobs:
             raphael_defconfig
           # Evaluate drivers/kernelsu/Kbuild before parallel build so its sed backports
           # on fs/namespace.c, include/linux/seccomp.h, and security/selinux/* run race-free
-          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+          make -j"$(nproc --all)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-            prepare
-          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+            prepare scripts
+          mkdir -p out/security/selinux
+          ./out/scripts/selinux/genheaders/genheaders out/security/selinux/flask.h out/security/selinux/av_permissions.h
+          make -j"$(nproc --all)" O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
             CROSS_COMPILE=aarch64-linux-gnu- \
             CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
             drivers/kernelsu/
