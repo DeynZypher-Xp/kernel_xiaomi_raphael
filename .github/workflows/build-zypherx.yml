@@ -1,0 +1,111 @@
+name: Build ZypherX Kernel (raphael - ColorOS 17 + Kali NetHunter + KernelSU-Next v3.4.2)
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout ZypherX Kernel Source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison build-essential ccache cpio curl device-tree-compiler \
+            flex git kmod libelf-dev libncurses5-dev libssl-dev \
+            python2 python3 python-is-python3 rsync unzip wget zip zstd \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+            binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
+
+      - name: Setup ZyC Clang 14 Toolchain
+        run: |
+          mkdir -p "$HOME/clang"
+          curl -L -s "https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20261022-release/Clang-14.0.6-20261022.tar.gz" -o clang.tar.gz
+          tar -xzf clang.tar.gz -C "$HOME/clang"
+          rm -f clang.tar.gz
+          "$HOME/clang/bin/clang" --version
+
+      - name: Configure and Pre-patch KernelSU-Next Backports
+        run: |
+          export PATH="$HOME/clang/bin:$PATH"
+          export KBUILD_BUILD_USER="Deyn_Zypher"
+          export KBUILD_BUILD_HOST="ZypherX"
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+            raphael_defconfig
+          # Evaluate drivers/kernelsu/Kbuild before parallel build so its sed backports
+          # on fs/namespace.c, include/linux/seccomp.h, and security/selinux/* run race-free
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+            prepare
+          make O=out ARCH=arm64 LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+            drivers/kernelsu/core/init.o
+
+      - name: Compile ZypherX Kernel (Image.gz-dtb & dtbo.img)
+        run: |
+          export PATH="$HOME/clang/bin:$PATH"
+          export KBUILD_BUILD_USER="Deyn_Zypher"
+          export KBUILD_BUILD_HOST="ZypherX"
+          make -j"$(nproc --all)" O=out ARCH=arm64 \
+            LLVM=1 LLVM_IAS=1 \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+            KCFLAGS="-Wno-error"
+          ls -lh out/arch/arm64/boot/Image.gz-dtb out/arch/arm64/boot/dtbo.img
+
+      - name: Package AnyKernel3 Flashable Zips (ColorOS 17 Safe & Full DTBO)
+        run: |
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git AnyKernel3
+          rm -rf AnyKernel3/.git AnyKernel3/modules AnyKernel3/patch AnyKernel3/ramdisk
+          cat << 'EOF' > AnyKernel3/anykernel.sh
+          ### AnyKernel3 Ramdisk Mod Script
+          ## osm0sis @ xda-developers
+          properties() { '
+          kernel.string=ZypherX Kernel by Deyn_Zypher (Kali NetHunter + KernelSU-Next v3.4.2)
+          do.devicecheck=1
+          do.modules=0
+          do.systemless=1
+          do.cleanup=1
+          do.cleanuponabort=0
+          device.name1=raphael
+          device.name2=raphaelin
+          device.name3=Mi 9T Pro
+          device.name4=Redmi K20 Pro
+          supported.versions=
+          supported.patchlevels=
+          '; }
+          block=/dev/block/bootdevice/by-name/boot;
+          is_slot_device=0;
+          ramdisk_compression=auto;
+          . tools/ak3-core.sh;
+          dump_boot;
+          write_boot;
+          EOF
+
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          (cd AnyKernel3 && zip -r9 "../ZypherX-Kernel-raphael-ColorOS17-NetHunter-KSUNext-v3.4.2.zip" * -x .git README.md \*placeholder)
+
+          cp out/arch/arm64/boot/dtbo.img AnyKernel3/
+          (cd AnyKernel3 && zip -r9 "../ZypherX-Kernel-raphael-WithDTBO-NetHunter-KSUNext-v3.4.2.zip" * -x .git README.md \*placeholder)
+
+      - name: Upload Flashable Kernel Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZypherX-Kernel-raphael-NetHunter-KSUNext-v3.4.2
+          path: |
+            ZypherX-Kernel-raphael-ColorOS17-NetHunter-KSUNext-v3.4.2.zip
+            ZypherX-Kernel-raphael-WithDTBO-NetHunter-KSUNext-v3.4.2.zip
+            out/arch/arm64/boot/Image.gz-dtb
+            out/arch/arm64/boot/dtbo.img
